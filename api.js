@@ -1,22 +1,28 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const router = express.Router();
+const bodyParser = require('body-parser');
 
+const app = express();
+const PORT = process.env.PORT || 8080;
+
+// Middleware
+app.use(bodyParser.json());
+
+// === Logika API ===
 const dataPath = path.join(__dirname, 'logs.json');
 
-// 🧠 Fungsi bantu untuk baca file log
+// Baca log
 function readLogs() {
   if (!fs.existsSync(dataPath)) fs.writeFileSync(dataPath, "[]");
   const data = fs.readFileSync(dataPath);
   return JSON.parse(data);
 }
 
-// ✅ Simpan log baru (POST /api/log)
-router.post('/log', (req, res) => {
+// POST /api/log
+app.post('/api/log', (req, res) => {
   const { db, status } = req.body;
 
-  // Simpan waktu sebagai format ISO 8601 (agar valid untuk new Date())
   const newLog = {
     time: new Date().toISOString(),
     db,
@@ -32,8 +38,8 @@ router.post('/log', (req, res) => {
   });
 });
 
-// ✅ Ambil log dengan query waktu (GET /api/log?range=...)
-router.get('/log', (req, res) => {
+// GET /api/log?range=...
+app.get('/api/log', (req, res) => {
   const logs = readLogs();
   const { range } = req.query;
 
@@ -62,4 +68,7 @@ router.get('/log', (req, res) => {
   res.json(logs);
 });
 
-module.exports = router;
+// === Start Server ===
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
+});
